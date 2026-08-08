@@ -33,6 +33,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
+  width: 100%;
 }
 
 /* --- شريط التنقل (Navbar) --- */
@@ -99,7 +100,7 @@ body {
 
 /* --- أزرار اللعبة والنظام --- */
 .btn {
-  padding: 0.7rem 1.4rem;
+  padding: 0.8rem 1.2rem;
   border-radius: 10px;
   font-weight: 700;
   cursor: pointer;
@@ -109,7 +110,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-size: 0.95rem;
+  font-size: 16px !important;
   text-decoration: none;
 }
 
@@ -157,7 +158,9 @@ body {
 }
 
 /* --- الحاويات المشتركة --- */
-.container {
+.container,
+.game-container, 
+.room-container {
   width: 100%;
   max-width: 1380px;
   margin: 0 auto;
@@ -226,18 +229,18 @@ body {
   color: var(--text-muted);
 }
 
-.form-input, .form-select {
+.form-input, .form-select, input, select {
   width: 100%;
   padding: 0.85rem 1rem;
   border-radius: 10px;
   border: 1px solid var(--border-color);
   background: var(--bg-card);
   color: var(--text-main);
-  font-size: 1rem;
+  font-size: 16px !important;
   transition: all 0.3s ease;
 }
 
-.form-input:focus, .form-select:focus {
+.form-input:focus, .form-select:focus, input:focus, select:focus {
   outline: none;
   border-color: var(--team-blue);
   box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
@@ -503,96 +506,6 @@ body {
   position: relative;
 }
 
-/* --- محتوى نافذة القوانين المخصصة --- */
-.rules-modal-content {
-  max-width: 780px;
-  width: 100%;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  padding: 1.75rem;
-  border-radius: 16px;
-  text-align: center;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
-  box-sizing: border-box;
-}
-
-.rules-title {
-  color: var(--accent-gold);
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-  font-size: 1.6rem;
-  font-weight: 700;
-}
-
-.rules-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.rules-image-container {
-  width: 100%;
-  max-height: 400px;
-  overflow: hidden;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--border-color);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 0.5rem;
-}
-
-.rules-image {
-  max-width: 100%;
-  max-height: 380px;
-  object-fit: contain;
-  border-radius: 8px;
-}
-
-.rules-action-container {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content me: center;
-  gap: 1rem;
-}
-
-.rules-hint {
-  color: var(--text-muted);
-  font-size: 1rem;
-  font-weight: 600;
-  line-height: 1.5;
-  margin: 0;
-}
-
-.rules-btn {
-  width: 100%;
-  max-width: 320px;
-  padding: 0.95rem 1.5rem;
-  font-size: 1.15rem;
-  font-weight: bold;
-  cursor: pointer;
-  border-radius: 10px;
-  border: none;
-  background: linear-gradient(135deg, #27ae60, #2ecc71);
-  color: #ffffff;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-  box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
-}
-
-.rules-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(46, 204, 113, 0.5);
-  background: linear-gradient(135deg, #2ecc71, #27ae60);
-}
-
-.rules-btn:active {
-  transform: translateY(0);
-}
-
 /* --- الجداول واللوحات الإدارية --- */
 .admin-stats {
   display: grid;
@@ -710,28 +623,6 @@ body {
 }
 
 /* --- التجاوب مع الشاشات (Responsive) --- */
-@media (min-width: 700px) {
-  .rules-body {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    text-align: right;
-  }
-  
-  .rules-image-container {
-    flex: 1 1 58%;
-  }
-  
-  .rules-action-container {
-    flex: 1 1 38%;
-    align-items: flex-start;
-  }
-
-  .rules-btn {
-    width: 100%;
-  }
-}
-
 @media (max-width: 1024px) {
   .arena-grid {
     grid-template-columns: 1fr;
@@ -742,5 +633,49 @@ body {
   .navbar {
     flex-direction: column;
     gap: 1rem;
+  }
+}
+
+/* ==================== تخصيص الشاشات الصغيرة (الموبايل أقل من 600px) ==================== */
+@media (max-width: 600px) {
+  .game-container, 
+  .room-container,
+  .container {
+    width: 96%;
+    padding: 0.5rem;
+  }
+
+  .teams-wrapper,
+  .players-grid,
+  .controls-row {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 0.75rem;
+  }
+
+  .btn,
+  input[type="text"],
+  input[type="password"],
+  .form-input,
+  .form-select {
+    width: 100% !important;
+    min-height: 46px;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+  }
+  
+  h2 {
+    font-size: 1.2rem;
+  }
+
+  .clue-input-group,
+  .guess-input-group {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 0.5rem;
   }
 }
