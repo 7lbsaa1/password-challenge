@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة الإدارة - Password Challenge</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="/gamepassword" class="navbar-brand">
+      <img src="7lbsaa.ball.jpg" alt="Logo" class="navbar-logo">
+      <span class="brand-title">PASSWORD CHALLENGE | ADMIN</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="/gamepassword">اللعبة</a></li>
+      <li><a href="/admin" class="active">لوحة الإدارة</a></li>
+      <li><a href="/customers">المستخدمون</a></li>
+      <li><a href="/reports">البلاغات</a></li>
+    </ul>
+  </nav>
+
+  <main class="container">
+    <h1 style="margin-bottom: 2rem;">نظرة عامة على النظام</h1>
+
+    <div class="admin-stats">
+      <div class="stat-card">
+        <h3>إجمالي المستخدمين</h3>
+        <div id="stat-total-users" class="value">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>الغرف النشطة حالياً</h3>
+        <div id="stat-active-rooms" class="value">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>البلاغات المعلقة</h3>
+        <div id="stat-total-reports" class="value">0</div>
+      </div>
+      <div class="stat-card">
+        <h3>المستخدمون المحظورون</h3>
+        <div id="stat-blocked-users" class="value">0</div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 1rem;">
+      <a href="/customers" class="btn btn-primary">إدارة الحظر والمستخدمين</a>
+      <a href="/reports" class="btn btn-outline">مراجعة البلاغات الواردة</a>
+    </div>
+  </main>
+
+  <script type="module">
+    import { auth } from './auth.js';
+    import { adminMgr } from './admin.js';
+
+    auth.requireAuth();
+    adminMgr.initDashboard();
+  </script>
+</body>
+</html>
