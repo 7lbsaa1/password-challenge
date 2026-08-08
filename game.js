@@ -21,6 +21,7 @@ export class GameManager {
     });
   }
 
+  // ==================== دالة بدء اللعبة ====================
   async startGame() {
     if (this.roomMgr.roomData.ownerId !== auth.userId) return;
     
@@ -31,24 +32,58 @@ export class GameManager {
     }
 
     const firstPlayer = await PlayerManager.getRoundPlayer();
-    const roundEndsAt = Date.now() + (this.roomMgr.roomData.roundTime * 1000);
 
+    // نقل اللعبة لمرحلة القوانين (intro) دون مؤقت إجباري للانتهاء (roundEndsAt: 0)
     await update(ref(db, `rooms/${this.roomMgr.roomId}`), {
       status: 'playing',
-      phase: 'intro', // يبدأ بشاشة القوانين shroot.png
+      phase: 'intro',
       currentRound: 1,
       currentTeam: 'red',
       currentPlayer: firstPlayer,
       currentClue: '',
       currentAnswer: '',
-      roundEndsAt: Date.now() + 6000 // 6 ثوانٍ لعرض القوانين
+      roundEndsAt: 0
     });
+  }
+
+  // ==================== دالة إغلاق القوانين وبدء الجولة ====================
+  async dismissRules() {
+    const room = this.roomMgr.roomData;
+    if (!room) return;
+
+    const modalEl = document.getElementById("rules-modal");
+
+    // 1. إذا كان صاحب الغرفة هو من ضغط على الزر
+    if (room.ownerId === auth.userId) {
+      // حساب وقت انتهاء الجولة بناءً على الوقت المحدد للغرفة
+      const startTime = Date.now() + (room.roundTime * 1000);
+      
+      // تحديث حالة الغرفة في Firebase لتبدأ مرحلة التلميح للجميع ويشتغل العداد
+      await update(ref(db, `rooms/${this.roomMgr.roomId}`), {
+        phase: 'hint',
+        roundEndsAt: startTime
+      });
+
+      // إخفاء النافذة لصاحب الغرفة
+      if (modalEl) {
+        modalEl.classList.remove("active");
+        modalEl.style.display = "none";
+      }
+    } 
+    // 2. إذا كان لاعباً عادياً (ليس صاحب الغرفة)
+    else {
+      // يتم إخفاء النافذة من شاشته فقط لينتظر بدء اللعبة دون التعديل على Firebase
+      if (modalEl) {
+        modalEl.classList.remove("active");
+        modalEl.style.display = "none";
+      }
+    }
   }
 
   // مزامنة المؤقت بين اللاعبين بناءً على توقيت السيرفر
   handleGamePhases(room) {
     clearInterval(this.timerInterval);
-    if (room.status !== 'playing') return;
+    if (room.status !== 'playing' || room.phase === 'intro') return;
 
     this.timerInterval = setInterval(() => {
       const remainingSeconds = Math.max(0, Math.ceil((room.roundEndsAt - Date.now()) / 1000));
@@ -63,12 +98,7 @@ export class GameManager {
   }
 
   async onTimerExpired(room) {
-    if (room.phase === 'intro') {
-      await update(ref(db, `rooms/${this.roomMgr.roomId}`), {
-        phase: 'hint',
-        roundEndsAt: Date.now() + (room.roundTime * 1000)
-      });
-    } else if (room.phase === 'hint' || room.phase === 'answer') {
+    if (room.phase === 'hint' || room.phase === 'answer') {
       // عند نفاد الوقت ينتقل الدور للفريق الخصم مع بقاء نفس اللاعب
       const nextTeam = room.currentTeam === 'red' ? 'blue' : 'red';
       await update(ref(db, `rooms/${this.roomMgr.roomId}`), {
@@ -121,7 +151,7 @@ export class GameManager {
         updates.phase = 'hint';
         updates.currentClue = '';
         updates.currentAnswer = '';
-        updates.roundEndsAt = Date.now() + (room.roundTime * 1000);
+        updates.roundEndsAt: Date.now() + (room.roundTime * 1000);
       }
       await update(ref(db, `rooms/${this.roomMgr.roomId}`), updates);
     } else {
@@ -156,10 +186,19 @@ export class GameManager {
       settingsPanel.style.display = (room.ownerId === auth.userId && room.status === 'waiting') ? 'flex' : 'none';
     }
 
-    // إدارة نوافذ القوانين ونهاية اللعبة
+    // إدارة نافذة القوانين: تفتح فقط عند phase === 'intro'، وتغلق تلقائياً لجميع اللاعبين فور تغيير المرحلة
     const rulesModal = document.getElementById("rules-modal");
-    if (rulesModal) rulesModal.classList.toggle("active", room.phase === 'intro');
+    if (rulesModal) {
+      if (room.phase === 'intro') {
+        rulesModal.classList.add("active");
+        rulesModal.style.display = "flex";
+      } else {
+        rulesModal.classList.remove("active");
+        rulesModal.style.display = "none";
+      }
+    }
 
+    // إدارة نافذة نهاية اللعبة
     const finishModal = document.getElementById("finish-modal");
     if (finishModal) {
       finishModal.classList.toggle("active", room.phase === 'finished');
