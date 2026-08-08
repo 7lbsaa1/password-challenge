@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إدارة المستخدمين والحظر - Password Challenge</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="/gamepassword" class="navbar-brand">
+      <img src="7lbsaa.ball.jpg" alt="Logo" class="navbar-logo">
+      <span class="brand-title">PASSWORD CHALLENGE</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="/gamepassword">اللعبة</a></li>
+      <li><a href="/admin">لوحة الإدارة</a></li>
+      <li><a href="/customers" class="active">المستخدمون</a></li>
+      <li><a href="/reports">البلاغات</a></li>
+    </ul>
+  </nav>
+
+  <main class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <h1>المستخدمون المسجلون ونظام الحظر</h1>
+      <input type="text" id="user-search-input" class="form-input" placeholder="ابحث بالاسم..." style="width: 320px;" oninput="filterUsers()">
+    </div>
+
+    <div class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>الاسم المميز</th>
+            <th>معرف المستخدم (User ID)</th>
+            <th>تاريخ التسجيل</th>
+            <th>الحالة</th>
+            <th>الإجراء (حظر / رفع حظر)</th>
+          </tr>
+        </thead>
+        <tbody id="customers-tbody"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script type="module">
+    import { auth } from './auth.js';
+    import { adminMgr } from './admin.js';
+
+    auth.requireAuth();
+    adminMgr.initCustomersPage();
+
+    window.toggleUserBlock = (userId, status) => adminMgr.toggleBlock(userId, status);
+    window.filterUsers = () => adminMgr.initCustomersPage();
+  </script>
+</body>
+</html>
