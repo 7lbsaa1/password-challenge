@@ -21,11 +21,11 @@ export class GameManager {
     });
   }
 
-  // ==================== دالة بدء اللعبة ====================
+  // ==================== دالة بدء اللعبة مباشرة بدون قوانين ====================
   async startGame() {
     if (this.roomMgr.roomData.ownerId !== auth.userId) return;
-    
-    const { red, blue } = this.roomMgr.roomData;
+
+    const { red, blue, roundTime } = this.roomMgr.roomData;
     if (!red.operative || !red.spymaster || !blue.operative || !blue.spymaster) {
       alert("يجب اكتمال 4 لاعبين في جميع الأدوار لبدء التحدي!");
       return;
@@ -33,64 +33,33 @@ export class GameManager {
 
     const firstPlayer = await PlayerManager.getRoundPlayer();
 
-    // نقل اللعبة لمرحلة القوانين (intro) دون مؤقت إجباري للانتهاء (roundEndsAt: 0)
+    // حساب وقت انتهاء الجولة فوراً بناءً على وقت الغرفة
+    const startTime = Date.now() + (roundTime * 1000);
+
+    // البدء الفوري في مرحلة التلميح (hint) وتشغيل المؤقت للجميع
     await update(ref(db, `rooms/${this.roomMgr.roomId}`), {
       status: 'playing',
-      phase: 'intro',
+      phase: 'hint',
       currentRound: 1,
       currentTeam: 'red',
       currentPlayer: firstPlayer,
       currentClue: '',
       currentAnswer: '',
-      roundEndsAt: 0
+      roundEndsAt: startTime
     });
-  }
-
-  // ==================== دالة إغلاق القوانين وبدء الجولة ====================
-  async dismissRules() {
-    const room = this.roomMgr.roomData;
-    if (!room) return;
-
-    const modalEl = document.getElementById("rules-modal");
-
-    // 1. إذا كان صاحب الغرفة هو من ضغط على الزر
-    if (room.ownerId === auth.userId) {
-      // حساب وقت انتهاء الجولة بناءً على الوقت المحدد للغرفة
-      const startTime = Date.now() + (room.roundTime * 1000);
-      
-      // تحديث حالة الغرفة في Firebase لتبدأ مرحلة التلميح للجميع ويشتغل العداد
-      await update(ref(db, `rooms/${this.roomMgr.roomId}`), {
-        phase: 'hint',
-        roundEndsAt: startTime
-      });
-
-      // إخفاء النافذة لصاحب الغرفة
-      if (modalEl) {
-        modalEl.classList.remove("active");
-        modalEl.style.display = "none";
-      }
-    } 
-    // 2. إذا كان لاعباً عادياً (ليس صاحب الغرفة)
-    else {
-      // يتم إخفاء النافذة من شاشته فقط لينتظر بدء اللعبة دون التعديل على Firebase
-      if (modalEl) {
-        modalEl.classList.remove("active");
-        modalEl.style.display = "none";
-      }
-    }
   }
 
   // مزامنة المؤقت بين اللاعبين بناءً على توقيت السيرفر
   handleGamePhases(room) {
     clearInterval(this.timerInterval);
-    if (room.status !== 'playing' || room.phase === 'intro') return;
+    if (room.status !== 'playing') return;
 
     this.timerInterval = setInterval(() => {
       const remainingSeconds = Math.max(0, Math.ceil((room.roundEndsAt - Date.now()) / 1000));
       const timerEl = document.getElementById("game-timer");
       if (timerEl) timerEl.innerText = remainingSeconds;
 
-      // عندما ينتهي المؤقت ويتم إدارة التبديل عبر صاحب الغرفة لتفادي التداخل
+      // عندما ينتهي المؤقت يتم إدارة التبديل عبر صاحب الغرفة لتفادي التداخل
       if (remainingSeconds <= 0 && room.ownerId === auth.userId) {
         this.onTimerExpired(room);
       }
@@ -114,7 +83,7 @@ export class GameManager {
   async submitClue(clueText) {
     const room = this.roomMgr.roomData;
     if (!clueText.trim()) return;
-    
+
     await update(ref(db, `rooms/${this.roomMgr.roomId}`), {
       currentClue: clueText.trim(),
       phase: 'answer',
@@ -134,7 +103,7 @@ export class GameManager {
 
   async verifyAnswer(isCorrect) {
     const room = this.roomMgr.roomData;
-    
+
     if (isCorrect) {
       const newScore = (room.scores[room.currentTeam] || 0) + 1;
       const updates = {
@@ -186,21 +155,6 @@ export class GameManager {
       settingsPanel.style.display = (room.ownerId === auth.userId && room.status === 'waiting') ? 'flex' : 'none';
     }
 
-    // إدارة نافذة القوانين حسب المرحلة
-    const rulesModal = document.getElementById("rules-modal");
-    if (room.phase === 'intro') {
-      if (rulesModal) {
-        rulesModal.style.display = "flex";
-        rulesModal.classList.add("active");
-      }
-    } else {
-      // إخفاء النافذة تلقائياً لأي مرحلة بعد intro (سواء كانت hint أو guess أوغيرهما)
-      if (rulesModal) {
-        rulesModal.classList.remove("active");
-        rulesModal.style.display = "none";
-      }
-    }
-
     // إدارة نافذة نهاية اللعبة
     const finishModal = document.getElementById("finish-modal");
     if (finishModal) {
@@ -217,7 +171,7 @@ export class GameManager {
     const isCurrentTeamOperative = room[room.currentTeam]?.operative?.id === auth.userId;
 
     if (playerImgEl && mysteryOverlay && room.currentPlayer) {
-      if (isCurrentTeamOperative && room.status === 'playing' && room.phase !== 'intro') {
+      if (isCurrentTeamOperative && room.status === 'playing') {
         playerImgEl.src = room.currentPlayer.image;
         playerImgEl.style.display = 'block';
         mysteryOverlay.style.display = 'none';
