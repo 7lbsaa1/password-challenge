@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إدارة البلاغات - Password Challenge</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="/gamepassword" class="navbar-brand">
+      <img src="7lbsaa.ball.jpg" alt="Logo" class="navbar-logo">
+      <span class="brand-title">PASSWORD CHALLENGE</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="/gamepassword">اللعبة</a></li>
+      <li><a href="/admin">لوحة الإدارة</a></li>
+      <li><a href="/customers">المستخدمون</a></li>
+      <li><a href="/reports" class="active">البلاغات</a></li>
+    </ul>
+  </nav>
+
+  <main class="container">
+    <h1 style="margin-bottom: 1.5rem;">سجل البلاغات الواردة</h1>
+
+    <div class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>اسم المُبلّغ</th>
+            <th>المُبلّغ عنه</th>
+            <th>سبب البلاغ</th>
+            <th>التاريخ</th>
+            <th>حالة البلاغ</th>
+            <th>إجراء الإدارة</th>
+          </tr>
+        </thead>
+        <tbody id="reports-tbody"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script type="module">
+    import { auth } from './auth.js';
+    import { adminMgr } from './admin.js';
+
+    auth.requireAuth();
+    adminMgr.initReportsPage();
+
+    window.resolveReport = (reportId) => adminMgr.resolveReport(reportId);
+    window.adminReplyToReport = (reportId) => {
+      const reply = prompt("اكتب ملاحظتك الإدارية أو ردك على هذا البلاغ:");
+      if (reply) alert("تم حفظ الملاحظة الإدارية بنجاح.");
+    };
+  </script>
+</body>
+</html>
