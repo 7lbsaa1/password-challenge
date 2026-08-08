@@ -98,7 +98,7 @@ export class GameManager {
   }
 
   async onTimerExpired(room) {
-    if (room.phase === 'hint' || room.phase === 'answer') {
+    if (room.phase === 'hint' || room.phase === 'answer' || room.phase === 'guess') {
       // عند نفاد الوقت ينتقل الدور للفريق الخصم مع بقاء نفس اللاعب
       const nextTeam = room.currentTeam === 'red' ? 'blue' : 'red';
       await update(ref(db, `rooms/${this.roomMgr.roomId}`), {
@@ -151,7 +151,7 @@ export class GameManager {
         updates.phase = 'hint';
         updates.currentClue = '';
         updates.currentAnswer = '';
-        updates.roundEndsAt: Date.now() + (room.roundTime * 1000);
+        updates.roundEndsAt = Date.now() + (room.roundTime * 1000);
       }
       await update(ref(db, `rooms/${this.roomMgr.roomId}`), updates);
     } else {
@@ -186,13 +186,16 @@ export class GameManager {
       settingsPanel.style.display = (room.ownerId === auth.userId && room.status === 'waiting') ? 'flex' : 'none';
     }
 
-    // إدارة نافذة القوانين: تفتح فقط عند phase === 'intro'، وتغلق تلقائياً لجميع اللاعبين فور تغيير المرحلة
+    // إدارة نافذة القوانين حسب المرحلة
     const rulesModal = document.getElementById("rules-modal");
-    if (rulesModal) {
-      if (room.phase === 'intro') {
-        rulesModal.classList.add("active");
+    if (room.phase === 'intro') {
+      if (rulesModal) {
         rulesModal.style.display = "flex";
-      } else {
+        rulesModal.classList.add("active");
+      }
+    } else {
+      // إخفاء النافذة تلقائياً لأي مرحلة بعد intro (سواء كانت hint أو guess أوغيرهما)
+      if (rulesModal) {
         rulesModal.classList.remove("active");
         rulesModal.style.display = "none";
       }
@@ -230,7 +233,7 @@ export class GameManager {
     const verifyBox = document.getElementById("verify-area");
 
     if (clueBox) clueBox.style.display = (isCurrentTeamOperative && room.phase === 'hint') ? 'flex' : 'none';
-    if (answerBox) answerBox.style.display = (room[room.currentTeam]?.spymaster?.id === auth.userId && room.phase === 'answer') ? 'flex' : 'none';
+    if (answerBox) answerBox.style.display = (room[room.currentTeam]?.spymaster?.id === auth.userId && (room.phase === 'answer' || room.phase === 'guess')) ? 'flex' : 'none';
     if (verifyBox) verifyBox.style.display = (isCurrentTeamOperative && room.phase === 'verify') ? 'flex' : 'none';
 
     // عرض التلميح والإجابة للجميع في الحلبة
